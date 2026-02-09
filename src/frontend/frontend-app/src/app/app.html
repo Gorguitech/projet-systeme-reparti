@@ -1,3 +1,21 @@
-<h1 class="text-3xl font-bold text-blue-600">
-  Tailwind fonctionne 🚀
-</h1>
+
+
+<!-- Layout principal -->
+<div class="min-h-screen flex flex-col bg-gradient-to-br from-moto-dark-900 via-moto-dark-800 to-moto-dark-900">
+  <!-- Header -->
+  <app-header></app-header>
+
+  <!-- Contenu principal -->
+  <main class="flex-grow container mx-auto px-4 py-8">
+    <!-- Indicateur de chargement global -->
+    <app-loading-spinner *ngIf="isLoading" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40"></app-loading-spinner>
+
+    <!-- Contenu de la page -->
+    <div class="animate-fade-in">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <app-footer></app-footer>
+</div>

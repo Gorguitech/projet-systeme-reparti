@@ -8,9 +8,31 @@ class MotoSerializer(serializers.ModelSerializer):
         read_only_fields = ('date_ajout',)
 
 class MotoListSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Moto
-        fields = ['id', 'marque', 'modele', 'annee', 'prix', 'type_moto', 'vendu', 'image_url']
+        fields = [
+            'id',
+            'marque',
+            'modele',
+            'annee',
+            'kilometrage',
+            'prix',
+            'type_moto',
+            'couleur',
+            'description',
+            'vendu',
+            'image_url',
+        ]
+
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.image.url)
+        return None
+
+
 
 class VendeurSerializer(serializers.ModelSerializer):
     motos_vendues = serializers.SerializerMethodField()

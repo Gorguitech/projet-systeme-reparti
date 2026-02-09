@@ -6,11 +6,16 @@ from .serializers import MotoSerializer, MotoListSerializer, VendeurSerializer, 
 
 class MotoViewSet(viewsets.ModelViewSet):
     queryset = Moto.objects.all().order_by('-date_ajout')
-    
+
     def get_serializer_class(self):
         if self.action == 'list':
             return MotoListSerializer
         return MotoSerializer
+
+    def get_serializer_context(self):
+        return {'request': self.request}
+
+    
     
     @action(detail=False, methods=['get'])
     def disponibles(self, request):
