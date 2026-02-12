@@ -28,9 +28,10 @@ class MotoListSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         if obj.image:
-            request = self.context.get('request')
-            return request.build_absolute_uri(obj.image.url)
+            return obj.image.url  
         return None
+
+
 
 
 

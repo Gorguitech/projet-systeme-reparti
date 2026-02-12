@@ -1,51 +1,170 @@
-# Étape 3 : Conteneurisation avec Docker
 
-## Architecture Docker
+ Étape 3 : Conteneurisation avec Docker
+ 1. Objectif
+L’objectif de cette étape est de :
 
-L'application est conteneurisée en trois services :
+Isoler les services
 
-### 1. PostgreSQL (Base de données)
-- **Image**: `postgres:15-alpine`
-- **Port**: 5432
-- **Volume persistant**: `postgres_data`
+Garantir la portabilité de l’application
 
+Simplifier le déploiement
 
-### 2. Django Backend (API REST)
-- **Image**: `python:3.11-slim` + multi-stage build
-- **Port**: 8000
-- **Serveur**: Gunicorn avec 3 workers
-- **Healthcheck**: Vérification automatique de l'API
+Assurer la persistance des données
 
-### 3. Angular Frontend (Interface utilisateur)
-- **Image**: `nginx:1.25-alpine` + multi-stage build
-- **Port**: 80
-- **Serveur**: Nginx avec configuration optimisée
-- **Proxy**: Redirection API vers backend
+Standardiser l’environnement d’exécution
 
-## Fichiers de configuration
+L’application est conteneurisée en trois services orchestrés via Docker Compose.
 
-### Dockerfiles
-- `backend/Dockerfile` : Build optimisé en deux étapes
-- `frontend/Dockerfile` : Build Angular + serveur Nginx
+2. Architecture Générale
+Navigateur
+    ↓
+Nginx (Frontend Angular)
+    ↓
+Django API (Gunicorn)
+    ↓
+PostgreSQL
+Les services communiquent via un réseau privé Docker :
 
+motos_network (bridge)
+ 3. Service PostgreSQL
+Image
+postgres:15-alpine
+Rôle
+Stockage des données
 
-### docker-compose.yml
-- Orchestration des 3 services
-- Dépendances et healthchecks
-- Volumes persistants
-- Réseau isolé
+Gestion relationnelle
 
-## Commandes de test
+Persistance via volume Docker
 
-```bash
-# Build et lancement
-./src/docker/build-and-run.sh
+Configuration
+Port interne : 5432
 
-# Voir les logs
-docker-compose -f src/docker/docker-compose.yml logs -f
+Volume persistant : postgres_data
 
-# Arrêter les conteneurs
-docker-compose -f src/docker/docker-compose.yml down
+Healthcheck : pg_isready
 
-# Nettoyer
-docker system prune -f
+Volume
+volumes:
+  postgres_data:
+Cela permet de conserver les données même après arrêt des conteneurs.
+
+4. Service Backend – Django REST API
+ Build
+Image de base : python:3.11-slim
+
+Multi-stage build
+
+Environnement virtuel isolé
+
+Utilisateur non-root
+
+ Démarrage automatique
+Un script entrypoint.sh est exécuté au démarrage :
+
+- Attente de PostgreSQL
+- python manage.py migrate
+- python manage.py collectstatic
+- Création automatique du superuser
+- Lancement Gunicorn
+ Serveur
+Gunicorn (3 workers)
+Port : 8000
+ Volumes
+volumes:
+  - static_volume:/app/staticfiles
+  - media_volume:/app/media
+Volume	Rôle
+static_volume	Fichiers statiques Django
+media_volume	Images uploadées
+ 5. Service Frontend – Angular + Nginx
+Build
+Image base : node:20-alpine
+
+Build Angular en mode production
+
+Nginx pour servir les fichiers statiques
+
+ Rôle de Nginx
+Sert l’application Angular (SPA)
+
+Proxy /api/ vers le backend
+
+Sert les fichiers /media/
+
+Optimisation cache des assets
+
+Compression GZIP
+
+ Port
+80
+ 6. Réseau Docker
+networks:
+  motos_network:
+    driver: bridge
+Tous les services communiquent via leur nom :
+
+Backend → postgres
+
+Frontend → backend
+
+ 7. Variables d’environnement
+Les variables sont centralisées dans un fichier .env :
+
+POSTGRES_DB=motos_db
+POSTGRES_USER=motos_user
+POSTGRES_PASSWORD=motos_password
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+
+DJANGO_SETTINGS_MODULE=backend_api.settings
+DEBUG=1
+SECRET_KEY=xxxx
+ 8. docker-compose.yml
+Le fichier docker-compose.yml orchestre :
+
+Les 3 services
+
+Les volumes persistants
+
+Le réseau interne
+
+Les dépendances
+
+Les healthchecks
+
+ 9. Commandes d’exécution
+Build
+docker compose build
+Lancement
+docker compose up
+Mode détaché
+docker compose up -d
+Logs
+docker compose logs -f
+Arrêt
+docker compose down
+Reset complet
+docker compose down -v
+10. Problèmes rencontrés et solutions
+Durant la mise en place :
+
+Problème	Solution
+Conflits dépendances Angular	Alignement des versions
+Images non accessibles	Configuration Nginx + volume media
+Healthcheck backend	Script entrypoint personnalisé
+CSS Admin Django absent	Configuration STATIC_ROOT
+Erreur réseau npm	Relance build + cache propre
+
+ Conclusion
+La conteneurisation permet :
+
+Une architecture modulaire
+
+Une meilleure isolation des services
+
+Une portabilité totale
+
+Une facilité de déploiement
+
+Une architecture prête pour Kubernetes
+
