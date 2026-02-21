@@ -1,0 +1,8 @@
+---
+- import_playbook: 00-prepare-servers.yml
+- import_playbook: 01-install-docker.yml
+- import_playbook: 02-install-kubernetes.yml
+- import_playbook: 03-install-jenkins.yml
+- import_playbook: 04-init-cluster.yml
+- import_playbook: 06-install-flannel.yml
+- import_playbook: 07-deploy-motos-app.yml

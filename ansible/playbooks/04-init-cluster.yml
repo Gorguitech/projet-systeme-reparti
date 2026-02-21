@@ -1,0 +1,27 @@
+---
+- hosts: master
+  become: yes
+
+  tasks:
+
+    - name: Initialize Kubernetes cluster
+      command: kubeadm init --pod-network-cidr=10.244.0.0/16
+      args:
+        creates: /etc/kubernetes/admin.conf
+
+    - name: Create .kube directory
+      file:
+        path: /home/node_master/.kube
+        state: directory
+        owner: node_master
+        group: node_master
+        mode: 0755
+
+    - name: Copy admin.conf to user kube config
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/node_master/.kube/config
+        remote_src: yes
+        owner: node_master
+        group: node_master
+        mode: 0644

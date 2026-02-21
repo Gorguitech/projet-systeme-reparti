@@ -1,0 +1,25 @@
+---
+- name: Install dependencies
+  apt:
+    name:
+      - openjdk-17-jdk
+      - curl
+    state: present
+    update_cache: yes
+
+- name: Download Jenkins .deb package
+  get_url:
+    url: https://pkg.jenkins.io/debian-stable/binary/jenkins_2.440.1_all.deb
+    dest: /tmp/jenkins.deb
+    mode: '0644'
+
+- name: Install Jenkins package
+  apt:
+    deb: /tmp/jenkins.deb
+    state: present
+
+- name: Ensure Jenkins service is started and enabled
+  systemd:
+    name: jenkins
+    state: started
+    enabled: yes

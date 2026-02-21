@@ -1,0 +1,25 @@
+---
+- name: Update apt
+  apt:
+    update_cache: yes
+
+- name: Install basic packages
+  apt:
+    name:
+      - curl
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - net-tools
+    state: present
+
+- name: Disable swap
+  command: swapoff -a
+  changed_when: false
+
+- name: Remove swap from fstab
+  lineinfile:
+    path: /etc/fstab
+    regexp: 'swap'
+    state: absent

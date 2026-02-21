@@ -1,0 +1,33 @@
+- name: Create manifests directory on master
+  file:
+    path: /opt/kubernetes/manifests
+    state: directory
+    mode: '0755'
+  become: yes
+
+- name: Copy static Kubernetes manifests
+  synchronize:
+    src: "{{ playbook_dir }}/../../kubernetes/"
+    dest: /opt/kubernetes/manifests/
+    rsync_opts:
+      - "--exclude=05-backend-deployment.yaml"
+      - "--exclude=07-frontend-deployment.yaml"
+  become: yes
+
+- name: Template backend deployment
+  template:
+    src: backend-deployment.yaml.j2
+    dest: /opt/kubernetes/manifests/05-backend-deployment.yaml
+  become: yes
+
+- name: Template frontend deployment
+  template:
+    src: frontend-deployment.yaml.j2
+    dest: /opt/kubernetes/manifests/07-frontend-deployment.yaml
+  become: yes
+
+- name: Deploy manifests
+  command: kubectl apply -f /opt/kubernetes/manifests/
+  become: yes
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf

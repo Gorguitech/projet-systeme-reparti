@@ -1,0 +1,28 @@
+---
+- name: Allow scheduling on control-plane
+  command: kubectl taint nodes k8s-master node-role.kubernetes.io/control-plane-
+  become: yes
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  ignore_errors: yes
+
+- name: Create directory for local-path provisioner
+  file:
+    path: /opt/local-path-provisioner
+    state: directory
+    mode: '0777'
+  become: yes
+
+- name: Install local-path provisioner
+  command: kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+  become: yes
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+
+- name: Set local-path as default StorageClass
+  command: >
+    kubectl patch storageclass local-path
+    -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+  become: yes
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf

@@ -1,0 +1,15 @@
+---
+- name: Install kubeadm, kubelet, kubectl
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    update_cache: yes
+
+- name: Enable kubelet
+  systemd:
+    name: kubelet
+    state: started
+    enabled: yes

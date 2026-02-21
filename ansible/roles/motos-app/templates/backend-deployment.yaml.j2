@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: motos-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: {{ backend_image }}
+        imagePullPolicy: IfNotPresent
+
+
+        ports:
+        - containerPort: 8000
+        env:
+        - name: POSTGRES_DB
+          value: motos_db
+        - name: POSTGRES_USER
+          value: motos_user
+        - name: POSTGRES_PASSWORD
+          value: motos_password
+        - name: POSTGRES_HOST
+          value: postgres
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: DEBUG
+          value: "0"
+        volumeMounts:
+        - name: media-storage
+          mountPath: /app/media
+      volumes:
+      - name: media-storage
+        persistentVolumeClaim:
+          claimName: media-pvc

@@ -1,0 +1,8 @@
+---
+timezone: "Africa/Dakar"
+kubernetes_version: "1.30"
+pod_network_cidr: "10.244.0.0/16"
+k8s_namespace: "motos-app"
+backend_image: "abdoulaye940/motos-backend:v2"
+frontend_image: "abdoulaye940/motos-frontend:v1"
+
