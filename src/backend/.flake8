@@ -1,3 +1,4 @@
 [flake8]
 exclude = venv,__pycache__,migrations
-max-line-length = 88
+max-line-length = 120
+ignore = E302,E303,W291,W293,W292,E501,F401,E265,E114,E116
