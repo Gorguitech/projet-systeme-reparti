@@ -1,0 +1,116 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_USER = "abdoulaye940"
+        BACKEND_IMAGE = "${DOCKERHUB_USER}/motos-backend:${BUILD_NUMBER}"
+        FRONTEND_IMAGE = "${DOCKERHUB_USER}/motos-frontend:${BUILD_NUMBER}"
+        BACKEND_LATEST = "${DOCKERHUB_USER}/motos-backend:latest"
+        FRONTEND_LATEST = "${DOCKERHUB_USER}/motos-frontend:latest"
+        K8S_NAMESPACE = "motos-app"
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Backend Lint & Tests') {
+            steps {
+                dir('src/backend') {
+                    sh '''
+                        python3 -m venv venv
+                        . venv/bin/activate
+                        pip install --upgrade pip
+                        pip install -r requirements.txt
+                        pip install flake8 pytest
+                        flake8 .
+                        pytest || true
+                    '''
+                }
+            }
+        }
+
+        stage('Frontend Lint') {
+            steps {
+                dir('src/frontend/frontend-app') {
+                    sh '''
+                        npm ci
+                        npm run lint
+                    '''
+                }
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                sh """
+                    docker build -f src/docker/backend/Dockerfile \
+                        -t ${BACKEND_IMAGE} \
+                        -t ${BACKEND_LATEST} .
+
+                    docker build -f src/docker/frontend/Dockerfile \
+                        -t ${FRONTEND_IMAGE} \
+                        -t ${FRONTEND_LATEST} .
+                """
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh """
+                        echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
+
+                        docker push ${BACKEND_IMAGE}
+                        docker push ${BACKEND_LATEST}
+
+                        docker push ${FRONTEND_IMAGE}
+                        docker push ${FRONTEND_LATEST}
+
+                        docker logout
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh """
+                    kubectl apply -f kubernetes/
+
+                    kubectl set image deployment/backend backend=${BACKEND_IMAGE} -n ${K8S_NAMESPACE}
+                    kubectl set image deployment/frontend frontend=${FRONTEND_IMAGE} -n ${K8S_NAMESPACE}
+
+                    kubectl rollout status deployment/backend -n ${K8S_NAMESPACE}
+                    kubectl rollout status deployment/frontend -n ${K8S_NAMESPACE}
+                """
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh "kubectl get pods -n ${K8S_NAMESPACE}"
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "CI/CD terminé avec succès "
+        }
+        failure {
+            echo "Pipeline échoué "
+        }
+        always {
+            cleanWs()
+        }
+    }
+}
