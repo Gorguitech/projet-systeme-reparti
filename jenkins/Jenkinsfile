@@ -83,21 +83,25 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh """
-                    kubectl apply -f kubernetes/
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh """
+                        kubectl apply -f kubernetes/
 
-                    kubectl set image deployment/backend backend=${BACKEND_IMAGE} -n ${K8S_NAMESPACE}
-                    kubectl set image deployment/frontend frontend=${FRONTEND_IMAGE} -n ${K8S_NAMESPACE}
+                        kubectl set image deployment/backend backend=${BACKEND_IMAGE} -n ${K8S_NAMESPACE}
+                        kubectl set image deployment/frontend frontend=${FRONTEND_IMAGE} -n ${K8S_NAMESPACE}
 
-                    kubectl rollout status deployment/backend -n ${K8S_NAMESPACE}
-                    kubectl rollout status deployment/frontend -n ${K8S_NAMESPACE}
-                """
+                        kubectl rollout status deployment/backend -n ${K8S_NAMESPACE}
+                        kubectl rollout status deployment/frontend -n ${K8S_NAMESPACE}
+                    """
+                }
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                sh "kubectl get pods -n ${K8S_NAMESPACE}"
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh "kubectl get pods -n ${K8S_NAMESPACE}"
+                }
             }
         }
     }
