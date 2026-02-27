@@ -81,18 +81,21 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
+      stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                    sh """
+                    sh '''
+                        kubectl delete pvc postgres-pvc -n motos-app --ignore-not-found=true
+                        kubectl delete pvc media-pvc -n motos-app --ignore-not-found=true
+
                         kubectl apply -f kubernetes/
 
-                        kubectl set image deployment/backend backend=${BACKEND_IMAGE} -n ${K8S_NAMESPACE}
-                        kubectl set image deployment/frontend frontend=${FRONTEND_IMAGE} -n ${K8S_NAMESPACE}
+                        kubectl set image deployment/backend backend=${BACKEND_IMAGE} -n motos-app
+                        kubectl set image deployment/frontend frontend=${FRONTEND_IMAGE} -n motos-app
 
-                        kubectl rollout status deployment/backend -n ${K8S_NAMESPACE}
-                        kubectl rollout status deployment/frontend -n ${K8S_NAMESPACE}
-                    """
+                        kubectl rollout status deployment/backend -n motos-app
+                        kubectl rollout status deployment/frontend -n motos-app
+                    '''
                 }
             }
         }
