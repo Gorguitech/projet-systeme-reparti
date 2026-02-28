@@ -82,23 +82,20 @@ pipeline {
         }
 
       stage('Deploy to Kubernetes') {
-            steps {
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                    sh '''
-                        kubectl delete pvc postgres-pvc -n motos-app --ignore-not-found=true
-                        kubectl delete pvc media-pvc -n motos-app --ignore-not-found=true
+        steps {
+            withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                sh '''
+                    kubectl apply -f kubernetes/
 
-                        kubectl apply -f kubernetes/
+                    kubectl rollout restart deployment/backend -n motos-app
+                    kubectl rollout restart deployment/frontend -n motos-app
 
-                        kubectl set image deployment/backend backend=${BACKEND_IMAGE} -n motos-app
-                        kubectl set image deployment/frontend frontend=${FRONTEND_IMAGE} -n motos-app
-
-                        kubectl rollout status deployment/backend -n motos-app
-                        kubectl rollout status deployment/frontend -n motos-app
-                    '''
-                }
+                    kubectl rollout status deployment/backend -n motos-app --timeout=120s
+                    kubectl rollout status deployment/frontend -n motos-app --timeout=120s
+                '''
             }
         }
+    }
 
         stage('Verify Deployment') {
             steps {

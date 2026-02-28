@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
       - name: backend
-        image: motos-backend:v2
-        imagePullPolicy: Never
+        image: abdoulaye940/motos-backend:latest
+        imagePullPolicy: Always
 
         ports:
         - containerPort: 8000

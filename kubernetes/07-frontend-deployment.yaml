@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: motos-frontend:latest
-        imagePullPolicy: Never
+        image: abdoulaye940/motos-frontend:latest
+        imagePullPolicy: Always
 
         ports:
         - containerPort: 80
